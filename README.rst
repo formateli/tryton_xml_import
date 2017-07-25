@@ -16,7 +16,7 @@ using the Tryton_ definition schema_, but with following considerations:
 - Any attribute in 'data' element is ignored.
 - Take care with user wich is importing the data, 'admin' user is a smart election because is not associated with any company, so property fields will have general values for all companies.
 - With --update argument, records will be updated instead of creation, the id must be same as database id for records. If record is not found an error is raised.
-- 'search' and 'pyson' attribute are not implemented at the moment.
+- 'pyson' attribute is not implemented at the moment.
 
 
 Usage

@@ -58,6 +58,8 @@ def _import_data(pool, file_name, data_node, update):
         return ModelData.get_id(module, fs_id)
 
     def get_search_id(model, domain):
+		"""Search according to domain
+		and returns first id found."""
         eval_str = "model.search({0})".format(domain)
         obj = eval(eval_str)
         if obj:
