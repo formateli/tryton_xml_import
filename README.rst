@@ -15,6 +15,7 @@ using the Tryton_ definition schema_, but with following considerations:
 - Records are always created (even if the id is already present in database), so be aware that if you run the script more than once, records will be duplicated in database. YOU ARE ADVISED!
 - Any attribute in 'data' element is ignored.
 - Take care with user wich is importing the data, 'admin' user is a smart election because is not associated with any company, so property fields will have general values for all companies.
+- With --update argument, records will be updated instead of creation, the id must be same as database id for records. If record is not found an error is raised.
 - 'search' and 'pyson' attribute are not implemented at the moment.
 
 
@@ -32,14 +33,14 @@ Import party.xml and product.xml in a 'test_database' using 'admin' user::
     tryton_xml_import party.xml product.xml -d test_database -u admin -c TRYTON_PATH/tryton.cfg
 
 Options:
-  -h, --help          show help message and exit
-  -v, --version       Show version
-  -u user             The Tryton user. Required.
-  -c config           The Tryton configuration file. Required.
-  -d database         The Tryton database name. Required.
-  -t tryton_path      The Tryton package path. Uses the installed one if ignored.
-  -x xml_directory    Directory where xml files are located. Default: Application directory.
-
+  -h, --help        show help message and exit
+  -v, --version     Show version
+  -u user           The Tryton user. Required.
+  -c config         The Tryton configuration file. Required.
+  -d database       The Tryton database name. Required.
+  -t tryton_path    The Tryton package path. Uses the installed one if ignored.
+  -x xml_directory  Directory where xml files are located. Default: Application directory.
+  --update          Update records according to its database id. No new records will be created.
 
 License
 -------

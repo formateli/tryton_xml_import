@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # This file is part of tryton_xml_import project.
 # The COPYRIGHT file at the top level of this repository
@@ -12,7 +12,7 @@ from xml.dom import minidom
 from xml.parsers import expat
 
 
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 LOCAL_IDS = {}
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
@@ -33,7 +33,7 @@ def _verify_file(f, default_path):
     return [file_name, file_result]
 
 
-def _import_data(pool, file_name, data_node):
+def _import_data(pool, file_name, data_node, update):
     def get_attr(element, attr_name):
         if not element.hasAttributes():
             return
@@ -56,6 +56,12 @@ def _import_data(pool, file_name, data_node):
 
         ModelData = pool.get('ir.model.data')
         return ModelData.get_id(module, fs_id)
+
+    def get_search_id(model, domain):
+        eval_str = "model.search({0})".format(domain)
+        obj = eval(eval_str)
+        if obj:
+            return obj[0].id
 
     def fill_fields(file_name, redord, model_obj):
         def get_xml_tag_value(node):
@@ -106,6 +112,7 @@ def _import_data(pool, file_name, data_node):
                 raise Exception(
                     "Invalid field '{0}' in file '{1}'".format(
                         name, file_name))
+            field_def = model_obj._fields[name]
             value = None
             if 'eval' in field.attributes.keys():
                 value = do_eval(
@@ -117,17 +124,25 @@ def _import_data(pool, file_name, data_node):
                     raise Exception(
                         "id '{0}' not found.".format(id_))
             elif 'search' in field.attributes.keys():
-                raise NotImplementedError(
-                    "'search' is not implemented.")
+                domain = get_attr(field, 'search')
+                model = pool.get(field_def.model_name)
+                value = get_search_id(model, domain)
+                if value is None:
+                    raise Exception(
+                        "search '{0}' with not result.".format(domain))
             elif 'pyson' in field.attributes.keys():
                 raise NotImplementedError(
                     "'pyson' is not implemented.")
             else:
                 value = get_xml_tag_value(field)
 
-            field_def = model_obj._fields[name]
             if field_def._type in ['one2one', 'many2one']:
                 value = pool.get(field_def.model_name)(value)
+            elif field_def._type == 'float':
+                value = round(value, field_def.digits[1])
+            elif field_def._type == 'numeric':
+                value = value.quantize(Decimal(10) ** -field_def.digits[1])
+
             setattr(model_obj, name, value)
 
     for record in data_node.childNodes:
@@ -140,21 +155,32 @@ def _import_data(pool, file_name, data_node):
             raise Exception('model attribute is required.')
         id_ = get_attr(record, 'id')
 
-        model_obj = pool.get(model)()
+        if update:
+            if not id_:
+                raise Exception('id attribute is required for updating.')
+            model_obj = pool.get(model)(int(id_))
+            if not model_obj:
+                raise Exception(
+                    "Error updating model '{0}'. id '{1}' not found".format(
+                        model, id_))
+            print(' Updating record with id ' + str(model_obj.id))
+        else:
+            model_obj = pool.get(model)()
         fill_fields(file_name, record, model_obj)
         model_obj.save()
 
-        print(' Record created with id ' + str(model_obj.id))
+        print('  Record created/updated with id ' + str(model_obj.id))
 
-        if id_:
-            if id_ in LOCAL_IDS:
-                raise Exception(
-                    "Record with id '{0}' already exists.".format(
-                        id_))
-            LOCAL_IDS[id_] = model_obj.id
+        if not update:
+            if id_:
+                if id_ in LOCAL_IDS:
+                    raise Exception(
+                        "Record with id '{0}' already exists.".format(
+                            id_))
+                LOCAL_IDS[id_] = model_obj.id
 
 
-def _import_file(pool, f):
+def _import_file(pool, f, update):
     print("Importing file '{0}'".format(f[0]))
     dom = minidom.parse(f[1])
     node = dom.getElementsByTagName('tryton')
@@ -163,7 +189,7 @@ def _import_file(pool, f):
     node = dom.getElementsByTagName('data')
     if not node:
         raise Exception("Missing element 'data'.")
-    _import_data(pool, f[0], data_node=node[0])
+    _import_data(pool, f[0], node[0], update)
 
 
 def _import_xml(files, args):
@@ -198,12 +224,16 @@ def _import_xml(files, args):
     with Transaction().start(database_name, 0) as transaction:
         Cache.clean(database_name)
         User = pool.get('res.user')
-        user_id = User.search([
+        user = User.search([
             ('login', '=', user),
-            ], limit=1)[0].id
-        with transaction.set_user(user_id):
-            for f in files:
-                _import_file(pool, f)
+            ], limit=1)[0]
+        company_id = None
+        if user.company:
+            company_id = user.company.id
+        with transaction.set_user(user.id):
+            with transaction.set_context(company=company_id):
+                for f in files:
+                    _import_file(pool, f, args.update)
         Cache.resets(database_name)
 
 
@@ -242,8 +272,14 @@ def run():
     help = 'The Tryton package path. Uses the installed one if ignored.'
     parser.add_argument('-t', metavar='tryton_path', help=help)
 
-    help = 'Directory where xml files are located. Default: Application directory.'
+    help = 'Directory where xml files are located. ' \
+        'Default: Application directory.'
     parser.add_argument('-x', metavar='xml_directory', help=help)
+
+    help = 'Update records according to its database id. ' \
+        'No new records will be created.'
+    parser.add_argument(
+        "--update", action='store_true', help=help)
 
     args = parser.parse_args()
 
