@@ -207,10 +207,22 @@ def _import_xml(files, args):
         Cache.resets(database_name)
 
 
-def _verify_files(files, path):
+def _verify_files(files, path, list_file):
     if not path:
         path = DIRECTORY
     result = []
+
+    lf = None
+    if len(files) == 1 and list_file:
+        lf = _verify_file(files[0], path)
+    if lf is not None:
+        files = []
+        with open(lf[1], 'r') as ls:
+            for line in ls:
+                l = line.strip()
+                if l:
+                    files.append(l)
+
     for f in files:
         result.append(
             _verify_file(f, path))
@@ -245,9 +257,13 @@ def run():
     help = 'Directory where xml files are located. Default: Application directory.'
     parser.add_argument('-x', metavar='xml_directory', help=help)
 
+    help = "files argument is a file with a list of files in it."
+    parser.add_argument(
+        "--list-file", action='store_true', help=help)
+
     args = parser.parse_args()
 
-    files = _verify_files(args.files, args.x)
+    files = _verify_files(args.files, args.x, args.list_file)
     _import_xml(files, args)
 
 
