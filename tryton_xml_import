@@ -8,7 +8,7 @@ import sys
 import os
 import argparse
 import datetime
-from decimal import Decimal, ROUND_DOWN
+from decimal import Decimal, ROUND_UP
 from xml.dom import minidom
 from xml.parsers import expat
 
@@ -27,7 +27,7 @@ def DecimalRound(val, r):
     factor += '1' 
 
     v = Decimal(val).quantize(
-        Decimal(factor), rounding=ROUND_DOWN)
+        Decimal(factor), rounding=ROUND_UP)
     return v
 
 
