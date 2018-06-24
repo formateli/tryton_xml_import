@@ -8,7 +8,7 @@ import sys
 import os
 import argparse
 import datetime
-from decimal import Decimal, ROUND_UP
+from decimal import Decimal
 from xml.dom import minidom
 from xml.parsers import expat
 
@@ -18,17 +18,37 @@ LOCAL_IDS = {}
 DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
 
-def DecimalRound(val, r):
-    i = 1
-    factor = '.'
-    while i < r:
-        factor += '0'
-        i += 1
-    factor += '1' 
+def get_right(val, n=None):
+    res = '.'
+    if val is None:
+        res += '0'
+    elif n is None:
+        res += val
+    elif len(val) == n:
+        res += val
+    elif  len(val) > n:
+        res += val[:n]
+    else:
+        x = n - len(val)
+        i = 1
+        zeros = ''
+        while True:
+            zeros += '0'
+            if i == x:
+                break
+            i += 1
+        res += val + zeros
+    return res
 
-    v = Decimal(val).quantize(
-        Decimal(factor), rounding=ROUND_UP)
-    return v
+
+def DecimalRound(val, r=None):
+    v = val.split('.')
+    cad = None
+    if len(v) == 1:
+        cad = val + get_right()
+    else:
+        cad = v[0] + get_right(v[1], r)
+    return Decimal(cad)
 
 
 def _verify_file(f, default_path):
