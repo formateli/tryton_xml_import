@@ -20,9 +20,7 @@ DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
 def get_right(val, n=None):
     res = '.'
-    if val is None:
-        res += '0'
-    elif n is None:
+    if n is None:
         res += val
     elif len(val) == n:
         res += val
@@ -45,7 +43,7 @@ def DecimalRound(val, r=None):
     v = val.split('.')
     cad = None
     if len(v) == 1:
-        cad = val + get_right()
+        cad = val + get_right('0', r)
     else:
         cad = v[0] + get_right(v[1], r)
     return Decimal(cad)
