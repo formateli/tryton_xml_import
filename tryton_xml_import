@@ -1,6 +1,4 @@
-#!/usr/bin/python
-
-# This file is part of tryton_xml_import project.
+# This file is part of tryton_xml_import script.
 # The COPYRIGHT file at the top level of this repository
 # contains the full copyright notices and license terms.
 
@@ -228,7 +226,7 @@ def _import_xml(files, args):
     pool.init()
 
     with Transaction().start(database_name, 0) as transaction:
-        Cache.clean(database_name)
+        #Cache.clean(database_name)
         User = pool.get('res.user')
         user_id = User.search([
             ('login', '=', user),
@@ -236,7 +234,7 @@ def _import_xml(files, args):
         with transaction.set_user(user_id):
             for f in files:
                 _import_file(pool, f)
-        Cache.resets(database_name)
+        #Cache.resets(database_name)
 
 
 def _verify_files(files, path, list_file):
@@ -283,7 +281,7 @@ def run():
     help = 'The Tryton database name. Required.'
     parser.add_argument('-d', metavar='database', help=help)
 
-    help = 'The Tryton package path. Uses the installed one if ignored.'
+    help = 'The trytond server path. Uses the installed one if ignored.'
     parser.add_argument('-t', metavar='tryton_path', help=help)
 
     help = 'Directory where xml files are located. Default: Application directory.'

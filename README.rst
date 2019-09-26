@@ -30,7 +30,7 @@ For help::
 
 Import party.xml and product.xml in a 'test_database' using 'admin' user::
 
-    tryton_xml_import party.xml product.xml -d test_database -u admin -c TRYTON_PATH/tryton.cfg
+    tryton_xml_import party.xml product.xml -d test_database -u admin -c TRYTON_PATH/trytond.conf
 
 Options:
   -h, --help        show help message and exit
