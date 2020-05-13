@@ -174,7 +174,7 @@ def _import_data(pool, file_name, data_node):
         fill_fields(file_name, record, model_obj)
         model_obj.save()
 
-        print(' Record created with id ' + str(model_obj.id))
+        print(" Record '{}' created with id '{}'".format(model, model_obj.id))
 
         if id_:
             if id_ in LOCAL_IDS:
